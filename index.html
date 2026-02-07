@@ -2,21 +2,88 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>スタフ</title>
+  <title>PDFビューア（ズーム対応）</title>
   <style>
     body {
       margin: 0;
-      overflow: hidden;
+      font-family: sans-serif;
     }
-  
-    embed {
-      width: 100vw;
-      height: 100vh;
+    #controls {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      background: #fff;
+      padding: 8px;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      z-index: 10;
+    }
+    button {
+      font-size: 18px;
+      margin: 0 5px;
+    }
+    canvas {
+      display: block;
+      margin: 60px auto;
     }
   </style>
 </head>
 <body>
-  <embed src="臨6095スタフ.pdf">
+
+<div id="controls">
+  <button id="zoomOut">−</button>
+  <span id="zoomLevel">100%</span>
+  <button id="zoomIn">＋</button>
+</div>
+
+<canvas id="pdfCanvas"></canvas>
+
+<!-- PDF.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
+<script>
+  const url = '臨6095.pdf'; // ← 表示したいPDF
+
+  let pdfDoc = null;
+  let pageNum = 1;
+  let scale = 1.0;
+
+  const canvas = document.getElementById('pdfCanvas');
+  const ctx = canvas.getContext('2d');
+
+  pdfjsLib.getDocument(url).promise.then(pdf => {
+    pdfDoc = pdf;
+    renderPage();
+  });
+
+  function renderPage() {
+    pdfDoc.getPage(pageNum).then(page => {
+      const viewport = page.getViewport({ scale });
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+
+      page.render({
+        canvasContext: ctx,
+        viewport: viewport
+      });
+
+      document.getElementById('zoomLevel').textContent =
+        Math.round(scale * 100) + '%';
+    });
+  }
+
+  document.getElementById('zoomIn').onclick = () => {
+    scale += 0.1;
+    renderPage();
+  };
+
+  document.getElementById('zoomOut').onclick = () => {
+    if (scale > 0.2) {
+      scale -= 0.1;
+      renderPage();
+    }
+  };
+</script>
+
 </body>
 </html>
