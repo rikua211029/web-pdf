@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>PDFビューア（複数ファイル対応）</title>
+  <title>PDFビューア（ファイル名表示）</title>
   <style>
     body {
       margin: 0;
@@ -20,9 +20,31 @@
       color: #fff;
       display: flex;
       align-items: center;
-      gap: 10px;
       padding: 0 10px;
       z-index: 100;
+    }
+
+    .toolbar-left,
+    .toolbar-center,
+    .toolbar-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .toolbar-left {
+      flex: 1;
+    }
+
+    .toolbar-center {
+      flex: 1;
+      justify-content: center;
+      font-weight: bold;
+    }
+
+    .toolbar-right {
+      flex: 1;
+      justify-content: flex-end;
     }
 
     #toolbar select,
@@ -51,32 +73,41 @@
 
 <!-- ツールバー -->
 <div id="toolbar">
-  <!-- PDF選択 -->
-  <select id="pdfSelect">
-    <option value="sample1.pdf">京電16スタフ.pdf</option>
-    <option value="sample2.pdf">京電26スタフ.pdf</option>
-    <option value="sample3.pdf">再変115.pdf</option>
-    <option value="sample3.pdf">大電5スタフ.pdf</option>
-    <option value="sample3.pdf">変42スタフ.pdf</option>
-    <option value="sample3.pdf">変BT34スタフ.pdf</option>
-    <option value="sample3.pdf">臨4101スタフ.pdf</option>
-    <option value="sample3.pdf">臨4304スタフ.pdf</option>
-    <option value="sample3.pdf">臨4602スタフ.pdf</option>
-    <option value="sample3.pdf">臨5104スタフ.pdf</option>
-    <option value="sample3.pdf">臨5751スタフ.pdf</option>
-    <option value="sample3.pdf">臨6017スタフ.pdf</option>
-    <option value="sample3.pdf">臨6095スタフ.pdf</option>
-  </select>
+  <!-- 左 -->
+  <div class="toolbar-left">
+    <select id="pdfSelect">
+  　  <option value="sample1.pdf">京電16スタフ.pdf</option>
+  　  <option value="sample2.pdf">京電26スタフ.pdf</option>
+  　  <option value="sample3.pdf">再変115.pdf</option>
+   　 <option value="sample3.pdf">大電5スタフ.pdf</option>
+   　 <option value="sample3.pdf">変42スタフ.pdf</option>
+  　  <option value="sample3.pdf">変BT34スタフ.pdf</option>
+   　 <option value="sample3.pdf">臨4101スタフ.pdf</option>
+   　 <option value="sample3.pdf">臨4304スタフ.pdf</option>
+   　 <option value="sample3.pdf">臨4602スタフ.pdf</option>
+   　 <option value="sample3.pdf">臨5104スタフ.pdf</option>
+   　 <option value="sample3.pdf">臨5751スタフ.pdf</option>
+   　 <option value="sample3.pdf">臨6017スタフ.pdf</option>
+    　<option value="sample3.pdf">臨6095スタフ.pdf</option>
+    </select>
 
-  <button id="prev">◀</button>
-  <span id="pageInfo">1 / 1</span>
-  <button id="next">▶</button>
+    <button id="prev">◀</button>
+    <span id="pageInfo">1 / 1</span>
+    <button id="next">▶</button>
+  </div>
 
-  <button id="zoomOut">−</button>
-  <span id="zoomLevel">100%</span>
-  <button id="zoomIn">＋</button>
+  <!-- 中央：ファイル名 -->
+  <div class="toolbar-center">
+    <span id="fileName">sample1.pdf</span>
+  </div>
 
-  <button id="download">⬇ Download</button>
+  <!-- 右 -->
+  <div class="toolbar-right">
+    <button id="zoomOut">−</button>
+    <span id="zoomLevel">100%</span>
+    <button id="zoomIn">＋</button>
+    <button id="download">⬇</button>
+  </div>
 </div>
 
 <div id="viewer">
@@ -89,10 +120,14 @@
   let pdfDoc = null;
   let pageNum = 1;
   let scale = 1.0;
-  let currentUrl = document.getElementById('pdfSelect').value;
 
+  const select = document.getElementById('pdfSelect');
+  const fileNameLabel = document.getElementById('fileName');
   const canvas = document.getElementById('pdfCanvas');
   const ctx = canvas.getContext('2d');
+
+  let currentUrl = select.value;
+  fileNameLabel.textContent = currentUrl;
 
   function loadPDF(url) {
     pdfjsLib.getDocument(url).promise.then(pdf => {
@@ -118,8 +153,9 @@
     });
   }
 
-  document.getElementById('pdfSelect').onchange = e => {
+  select.onchange = e => {
     currentUrl = e.target.value;
+    fileNameLabel.textContent = currentUrl;
     loadPDF(currentUrl);
   };
 
