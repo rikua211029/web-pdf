@@ -141,11 +141,25 @@ canvas {
     <span id="fileName">PDF未選択</span>
   </div>
 
-  <!-- 右：× → ゴミ箱 → ダウンロード → ズーム -->
-     <button id="zoomOut">−</button>
-    <span id="zoomLevel">100%</span>
-    <button id="zoomIn">＋</button>
-  </div>
+<div class="toolbar-right">
+  <!-- ズーム -->
+  <button id="zoomOut">−</button>
+  <span id="zoomLevel">100%</span>
+  <button id="zoomIn">＋</button>
+
+  <!-- ダウンロード -->
+  <button id="downloadBtn">
+    <img src="data:image/svg+xml;utf8,
+    <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'>
+      <path d='M5 20h14v-2H5v2zm7-18v12l4-4 1.41 1.41L12 18.83l-5.41-5.42L8 10l4 4V2h1z'/>
+    </svg>">
+  </button>
+
+  <!-- ゴミ箱 -->
+  <button id="clearBtn">🗑</button>
+
+  
+</div>
   
   <div class="toolbar-right">
     <button id="clearBtn">🗑</button>
