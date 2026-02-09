@@ -102,28 +102,28 @@ canvas {
 
 <div id="toolbar">
 
-  <!-- 左：既存PDF + アップロード -->
-  <div class="toolbar-left">
-    <select id="pdfSelect">
-      <option value="">既存PDFを選択</option>
-  　  <option value="京電16スタフ.pdf">京電16スタフ.pdf</option>
-  　  <option value="京電16スタフ.pdf">京電26スタフ.pdf</option>
-  　  <option value="再変115.pdf">再変115.pdf</option>
-   　 <option value="大電5スタフ.pdf">大電5スタフ.pdf</option>
-   　 <option value="変42スタフ.pdf">変42スタフ.pdf</option>
-  　  <option value="変BT34スタフ.pdf">変BT34スタフ.pdf</option>
-   　 <option value="臨4101スタフ.pdf">臨4101スタフ.pdf</option>
-   　 <option value="臨4304スタフ.pdf">臨4304スタフ.pdf</option>
-   　 <option value="臨4602スタフ.pdf">臨4602スタフ.pdf</option>
-   　 <option value="臨5104スタフ.pdf">臨5104スタフ.pdf</option>
-   　 <option value="臨5751スタフ.pdf">臨5751スタフ.pdf</option>
-   　 <option value="臨6017スタフ.pdf">臨6017スタフ.pdf</option>
-    　<option value="臨6095スタフ.pdf">臨6095スタフ.pdf</option>
-    </select>
-
 <div class="toolbar-left">
+  <!-- 既存PDF -->
+  <select id="pdfSelect">
+    <option value="">既存PDFを選択</option>
+    <option value="京電16スタフ.pdf">京電16スタフ.pdf</option>
+    <option value="京電26スタフ.pdf">京電26スタフ.pdf</option>
+    <option value="再変115.pdf">再変115.pdf</option>
+    <option value="大電5スタフ.pdf">大電5スタフ.pdf</option>
+    <option value="変42スタフ.pdf">変42スタフ.pdf</option>
+    <option value="変BT34スタフ.pdf">変BT34スタフ.pdf</option>
+    <option value="臨4101スタフ.pdf">臨4101スタフ.pdf</option>
+    <option value="臨4304スタフ.pdf">臨4304スタフ.pdf</option>
+    <option value="臨4602スタフ.pdf">臨4602スタフ.pdf</option>
+    <option value="臨5104スタフ.pdf">臨5104スタフ.pdf</option>
+    <option value="臨5751スタフ.pdf">臨5751スタフ.pdf</option>
+    <option value="臨6017スタフ.pdf">臨6017スタフ.pdf</option>
+    <option value="臨6095スタフ.pdf">臨6095スタフ.pdf</option>
+  </select>
+
+  <!-- アップロード -->
   <label class="upload-btn">
-    <input type="file" id="pdfInput" accept="application/pdf">
+    <input type="file" id="pdfInput" accept="application/pdf" hidden>
     <img src="data:image/svg+xml;utf8,
     <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'
          fill='none' stroke='white' stroke-width='2'
@@ -150,9 +150,6 @@ canvas {
   <!-- ゴミ箱 -->
   <button id="clearBtn">🗑</button>
   
-</div>
-  
-
 <button id="downloadBtn" title="ダウンロード">
   <img src="data:image/svg+xml;utf8,
   <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'
