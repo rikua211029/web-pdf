@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>PDFビューア（機能バー付き）</title>
+  <title>PDFビューア（複数ファイル対応）</title>
   <style>
     body {
       margin: 0;
@@ -10,7 +10,6 @@
       background: #f0f0f0;
     }
 
-    /* 上部ツールバー */
     #toolbar {
       position: fixed;
       top: 0;
@@ -26,21 +25,18 @@
       z-index: 100;
     }
 
+    #toolbar select,
     #toolbar button {
       background: #444;
       color: #fff;
       border: none;
-      padding: 6px 10px;
-      cursor: pointer;
+      padding: 6px 8px;
       border-radius: 4px;
-    }
-
-    #toolbar button:hover {
-      background: #666;
+      cursor: pointer;
     }
 
     #viewer {
-      padding-top: 60px; /* ツールバー分 */
+      padding-top: 60px;
       display: flex;
       justify-content: center;
     }
@@ -53,8 +49,25 @@
 </head>
 <body>
 
-<!-- 機能バー -->
+<!-- ツールバー -->
 <div id="toolbar">
+  <!-- PDF選択 -->
+  <select id="pdfSelect">
+    <option value="sample1.pdf">京電16スタフ.pdf</option>
+    <option value="sample2.pdf">京電26スタフ.pdf</option>
+    <option value="sample3.pdf">再変115.pdf</option>
+    <option value="sample3.pdf">大電5スタフ.pdf</option>
+    <option value="sample3.pdf">変42スタフ.pdf</option>
+    <option value="sample3.pdf">変BT34スタフ.pdf</option>
+    <option value="sample3.pdf">臨4101スタフ.pdf</option>
+    <option value="sample3.pdf">臨4304スタフ.pdf</option>
+    <option value="sample3.pdf">臨4602スタフ.pdf</option>
+    <option value="sample3.pdf">臨5104スタフ.pdf</option>
+    <option value="sample3.pdf">臨5751スタフ.pdf</option>
+    <option value="sample3.pdf">臨6017スタフ.pdf</option>
+    <option value="sample3.pdf">臨6095スタフ.pdf</option>
+  </select>
+
   <button id="prev">◀</button>
   <span id="pageInfo">1 / 1</span>
   <button id="next">▶</button>
@@ -62,30 +75,33 @@
   <button id="zoomOut">−</button>
   <span id="zoomLevel">100%</span>
   <button id="zoomIn">＋</button>
+
+  <button id="download">⬇ Download</button>
 </div>
 
-<!-- PDF表示エリア -->
 <div id="viewer">
   <canvas id="pdfCanvas"></canvas>
 </div>
 
-<!-- PDF.js -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 
 <script>
-  const url = '114514.pdf';
-
   let pdfDoc = null;
   let pageNum = 1;
   let scale = 1.0;
+  let currentUrl = document.getElementById('pdfSelect').value;
 
   const canvas = document.getElementById('pdfCanvas');
   const ctx = canvas.getContext('2d');
 
-  pdfjsLib.getDocument(url).promise.then(pdf => {
-    pdfDoc = pdf;
-    renderPage();
-  });
+  function loadPDF(url) {
+    pdfjsLib.getDocument(url).promise.then(pdf => {
+      pdfDoc = pdf;
+      pageNum = 1;
+      scale = 1.0;
+      renderPage();
+    });
+  }
 
   function renderPage() {
     pdfDoc.getPage(pageNum).then(page => {
@@ -93,10 +109,7 @@
       canvas.width = viewport.width;
       canvas.height = viewport.height;
 
-      page.render({
-        canvasContext: ctx,
-        viewport
-      });
+      page.render({ canvasContext: ctx, viewport });
 
       document.getElementById('pageInfo').textContent =
         `${pageNum} / ${pdfDoc.numPages}`;
@@ -104,6 +117,11 @@
         Math.round(scale * 100) + '%';
     });
   }
+
+  document.getElementById('pdfSelect').onchange = e => {
+    currentUrl = e.target.value;
+    loadPDF(currentUrl);
+  };
 
   document.getElementById('prev').onclick = () => {
     if (pageNum > 1) {
@@ -130,6 +148,16 @@
       renderPage();
     }
   };
+
+  document.getElementById('download').onclick = () => {
+    const a = document.createElement('a');
+    a.href = currentUrl;
+    a.download = currentUrl;
+    a.click();
+  };
+
+  // 初期表示
+  loadPDF(currentUrl);
 </script>
 
 </body>
