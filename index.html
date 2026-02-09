@@ -2,6 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PDFビューア</title>
 
 <style>
@@ -31,39 +32,26 @@ body {
   width: 280px;
 }
 
-.lock-box h2 {
-  margin-bottom: 16px;
-}
-
-.lock-box input {
+.lock-box input,
+.lock-box button {
   width: 100%;
   padding: 10px;
   font-size: 16px;
-  margin-bottom: 12px;
+  margin-top: 12px;
   border-radius: 6px;
   border: none;
 }
 
 .lock-box button {
-  width: 100%;
-  padding: 10px;
-  font-size: 16px;
   background: #1976d2;
   color: #fff;
-  border: none;
-  border-radius: 6px;
   cursor: pointer;
-}
-
-.lock-box button:hover {
-  background: #1e88e5;
 }
 
 #lockError {
   display: none;
   margin-top: 10px;
   color: #f44336;
-  font-size: 14px;
 }
 
 /* ===== ツールバー ===== */
@@ -90,21 +78,17 @@ body {
 }
 
 .toolbar-left,
-.toolbar-right {
-  flex: 1;
-}
-
+.toolbar-right { flex: 1; }
 .toolbar-center {
   flex: 2;
   justify-content: center;
-  font-size: 22px;
+  font-size: 20px;
   font-weight: bold;
-  white-space: nowrap;
   overflow: hidden;
+  white-space: nowrap;
   text-overflow: ellipsis;
 }
 
-/* アップロード：アイコンボタン */
 .icon-btn {
   width: 32px;
   height: 32px;
@@ -115,17 +99,9 @@ body {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  font-size: 18px;
 }
 
-.icon-btn:hover {
-  background: #1e88e5;
-}
-
-/* file input は非表示 */
-#pdfInput {
-  display: none;
-}
+#pdfInput { display: none; }
 
 #toolbar select,
 #toolbar button {
@@ -133,23 +109,10 @@ body {
   color: #fff;
   border: none;
   padding: 8px 12px;
-  font-size: 16px;
   border-radius: 6px;
   cursor: pointer;
 }
 
-#toolbar button:hover,
-#toolbar select:hover {
-  background: #666;
-}
-
-#zoomLevel {
-  font-size: 16px;
-  min-width: 60px;
-  text-align: center;
-}
-
-/* ===== PDF表示 ===== */
 #viewer {
   padding-top: 72px;
   display: flex;
@@ -158,36 +121,37 @@ body {
   gap: 24px;
 }
 
+/* ===== canvas（ピンチズーム対応） ===== */
 canvas {
-  display: block;
-  margin: 0 auto;
   background: #fff;
   box-shadow: 0 0 10px rgba(0,0,0,0.2);
+  max-width: 100%;
+  height: auto;
+  touch-action: none;
 }
 </style>
 </head>
 
 <body>
 
-<!-- ===== ロック画面 ===== -->
+<!-- ロック画面 -->
 <div id="lockScreen">
   <div class="lock-box">
-    <h2>🔒 パスワードを入力</h2>
-    <input type="password" id="passwordInput" placeholder="Password">
+    <h2>🔒 パスワード</h2>
+    <input type="password" id="passwordInput">
     <button id="unlockBtn">開く</button>
-    <p id="lockError">パスワードが違います</p>
+    <div id="lockError">パスワードが違います</div>
   </div>
 </div>
 
-<!-- ===== アプリ本体 ===== -->
+<!-- アプリ本体 -->
 <div id="app" style="display:none;">
-
   <div id="toolbar">
     <div class="toolbar-left">
       <select id="pdfSelect">
-      <option value="">既存のPDFを表示</option>
-      <option value="京電16スタフ.pdf">京電16スタフ.pdf</option>
-  　  <option value="京電16スタフ.pdf">京電26スタフ.pdf</option>
+        <option value="">PDF選択</option>
+  　  <option value="京電16スタフ.pdf">京電16スタフ.pdf</option>
+  　  <option value="京電26スタフ.pdf">京電26スタフ.pdf</option>
   　  <option value="再変115.pdf">再変115.pdf</option>
    　 <option value="大電5スタフ.pdf">大電5スタフ.pdf</option>
    　 <option value="変42スタフ.pdf">変42スタフ.pdf</option>
@@ -201,20 +165,16 @@ canvas {
     　<option value="臨6095スタフ.pdf">臨6095スタフ.pdf</option>
       </select>
 
-      <label for="pdfInput" class="icon-btn" title="PDFをアップロード">📄</label>
+      <label for="pdfInput" class="icon-btn">📄</label>
       <input type="file" id="pdfInput" accept="application/pdf">
     </div>
 
-    <div class="toolbar-center">
-      <span id="fileName">PDF未選択</span>
-    </div>
+    <div class="toolbar-center" id="fileName">PDF未選択</div>
 
     <div class="toolbar-right">
       <button id="zoomOut">−</button>
       <span id="zoomLevel">100%</span>
       <button id="zoomIn">＋</button>
-      <button id="clearBtn">🗑</button>
-      <button id="downloadBtn">⬇</button>
     </div>
   </div>
 
@@ -223,88 +183,95 @@ canvas {
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>
-/* ===== パスワード ===== */
-const PASSWORD = "2009"; // ← ここを変更
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 
-document.getElementById("unlockBtn").onclick = () => {
-  const input = document.getElementById("passwordInput").value;
-  if (input === PASSWORD) {
-    document.getElementById("lockScreen").style.display = "none";
-    document.getElementById("app").style.display = "block";
+/* ===== パスワード ===== */
+const PASSWORD = "2009";
+unlockBtn.onclick = () => {
+  if (passwordInput.value === PASSWORD) {
+    lockScreen.style.display = "none";
+    app.style.display = "block";
   } else {
-    document.getElementById("lockError").style.display = "block";
+    lockError.style.display = "block";
   }
 };
 
 /* ===== PDF処理 ===== */
 let pdfDoc = null;
 let scale = 1.0;
-let currentFile = null;
-let currentUrl = null;
+let startDist = null;
+let startScale = 1.0;
 
-const viewer = document.getElementById('viewer');
-const fileNameLabel = document.getElementById('fileName');
-const zoomLevel = document.getElementById('zoomLevel');
+const viewer = document.getElementById("viewer");
+const zoomLevel = document.getElementById("zoomLevel");
+const fileNameLabel = document.getElementById("fileName");
 
-function loadPdf(source, name) {
-  viewer.innerHTML = '';
-  fileNameLabel.textContent = name;
-  scale = 1.0;
-
-  pdfjsLib.getDocument(source).promise.then(pdf => {
-    pdfDoc = pdf;
-    renderAll();
-  });
+function getTouchDist(t) {
+  const dx = t[0].clientX - t[1].clientX;
+  const dy = t[0].clientY - t[1].clientY;
+  return Math.hypot(dx, dy);
 }
 
-  document.getElementById('pdfSelect').onchange = e => {
-  const url = e.target.value;
-  if (!url) return;
-
-  currentUrl = url;
-  currentFile = null;
-  document.getElementById('pdfInput').value = '';
-
-  loadPdf(url, url);
-};
-
 function renderAll() {
-  viewer.innerHTML = '';
-  zoomLevel.textContent = Math.round(scale * 100) + '%';
+  viewer.innerHTML = "";
+  zoomLevel.textContent = Math.round(scale * 100) + "%";
 
   for (let i = 1; i <= pdfDoc.numPages; i++) {
     pdfDoc.getPage(i).then(page => {
       const vp = page.getViewport({ scale });
-      const c = document.createElement('canvas');
-      const ctx = c.getContext('2d');
+      const c = document.createElement("canvas");
+      const ctx = c.getContext("2d");
       c.width = vp.width;
       c.height = vp.height;
+
+      c.addEventListener("touchstart", e => {
+        if (e.touches.length === 2) {
+          startDist = getTouchDist(e.touches);
+          startScale = scale;
+        }
+      }, { passive: false });
+
+      c.addEventListener("touchmove", e => {
+        if (e.touches.length === 2 && startDist) {
+          e.preventDefault();
+          const zoom = getTouchDist(e.touches) / startDist;
+          scale = Math.min(Math.max(startScale * zoom, 0.4), 4);
+          renderAll();
+        }
+      }, { passive: false });
+
+      c.addEventListener("touchend", () => startDist = null);
+
       page.render({ canvasContext: ctx, viewport: vp });
       viewer.appendChild(c);
     });
   }
 }
 
-document.getElementById('pdfInput').onchange = e => {
+function loadPdf(src, name) {
+  fileNameLabel.textContent = name;
+  scale = 1.0;
+  pdfjsLib.getDocument(src).promise.then(pdf => {
+    pdfDoc = pdf;
+    renderAll();
+  });
+}
+
+pdfSelect.onchange = e => {
+  if (e.target.value) loadPdf(e.target.value, e.target.value);
+};
+
+pdfInput.onchange = e => {
   const f = e.target.files[0];
   if (!f) return;
-  currentFile = f;
   const r = new FileReader();
   r.onload = () => loadPdf(new Uint8Array(r.result), f.name);
   r.readAsArrayBuffer(f);
 };
 
-document.getElementById('zoomIn').onclick = () => { scale += 0.1; renderAll(); };
-document.getElementById('zoomOut').onclick = () => { if (scale > 0.4) { scale -= 0.1; renderAll(); } };
-document.getElementById('clearBtn').onclick = () => { viewer.innerHTML = ''; fileNameLabel.textContent = 'PDF未選択'; };
-document.getElementById('downloadBtn').onclick = () => {
-  if (currentFile) {
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(currentFile);
-    a.download = currentFile.name;
-    a.click();
-  }
-};
+zoomIn.onclick = () => { scale += 0.1; renderAll(); };
+zoomOut.onclick = () => { if (scale > 0.4) { scale -= 0.1; renderAll(); } };
 </script>
 
 </body>
