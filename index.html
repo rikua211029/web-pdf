@@ -258,6 +258,17 @@ function loadPdf(source, name) {
   });
 }
 
+  document.getElementById('pdfSelect').onchange = e => {
+  const url = e.target.value;
+  if (!url) return;
+
+  currentUrl = url;
+  currentFile = null;
+  document.getElementById('pdfInput').value = '';
+
+  loadPdf(url, url);
+};
+
 function renderAll() {
   viewer.innerHTML = '';
   zoomLevel.textContent = Math.round(scale * 100) + '%';
