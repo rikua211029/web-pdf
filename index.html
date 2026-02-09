@@ -26,6 +26,29 @@ body {
   z-index: 100;
 }
 
+  /* ===== アップロード：アイコンボタン ===== */
+.icon-btn {
+  width: 32px;
+  height: 32px;
+  background: #1976d2;
+  color: #fff;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 18px;
+}
+
+.icon-btn:hover {
+  background: #1e88e5;
+}
+
+/* file input は完全に非表示 */
+#pdfInput {
+  display: none;
+}
+  
 .toolbar-left,
 .toolbar-center,
 .toolbar-right {
@@ -121,19 +144,10 @@ canvas {
     <option value="臨6095スタフ.pdf">臨6095スタフ.pdf</option>
   </select>
 
-  <!-- アップロード -->
-  <label class="upload-btn">
-    <input type="file" id="pdfInput" accept="application/pdf" hidden>
-    <img src="data:image/svg+xml;utf8,
-    <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'
-         fill='none' stroke='white' stroke-width='2'
-         stroke-linecap='round' stroke-linejoin='round'>
-      <path d='M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4'/>
-      <polyline points='17 8 12 3 7 8'/>
-      <line x1='12' y1='3' x2='12' y2='15'/>
-    </svg>">
-    <span>PDFを開く</span>
+  <label for="pdfInput" class="icon-btn" title="PDFをアップロード">
+    📄
   </label>
+  <input type="file" id="pdfInput" accept="application/pdf">
 </div>
 
   <!-- 中央：ファイル名 -->
