@@ -17,12 +17,12 @@ body {
   top: 0;
   left: 0;
   right: 0;
-  height: 90px;
+  height: 72px;
   background: #222;
   color: #fff;
   display: flex;
   align-items: center;
-  padding: 0 20px;
+  padding: 0 16px;
   z-index: 100;
 }
 
@@ -31,7 +31,7 @@ body {
 .toolbar-right {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 10px;
 }
 
 .toolbar-left,
@@ -42,22 +42,22 @@ body {
 .toolbar-center {
   flex: 2;
   justify-content: center;
-  font-size: 26px;
+  font-size: 22px;
   font-weight: bold;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-/* ボタン共通 */
 #toolbar select,
-#toolbar button {
+#toolbar button,
+#toolbar input[type="file"] {
   background: #444;
   color: #fff;
   border: none;
-  padding: 14px 20px;
-  font-size: 22px;
-  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 16px;
+  border-radius: 6px;
   cursor: pointer;
 }
 
@@ -66,44 +66,48 @@ body {
   background: #666;
 }
 
+#toolbar input[type="file"] {
+  max-width: 180px;
+}
+
 #toolbar button img {
-  width: 30px;
-  height: 30px;
+  width: 22px;
+  height: 22px;
   pointer-events: none;
 }
 
 #zoomLevel {
-  font-size: 22px;
-  min-width: 80px;
+  font-size: 16px;
+  min-width: 60px;
   text-align: center;
 }
 
 /* ===== PDF表示 ===== */
 #viewer {
-  padding-top: 120px;
+  padding-top: 96px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 28px;
+  gap: 24px;
 }
 
 canvas {
   background: #fff;
-  box-shadow: 0 0 10px rgba(0,0,0,0.25);
+  box-shadow: 0 0 10px rgba(0,0,0,0.2);
 }
 </style>
 </head>
 
 <body>
 
-<!-- ===== ツールバー ===== -->
 <div id="toolbar">
 
-  <!-- 左：PDF選択 + ズーム -->
+  <!-- 左：既存PDF + アップロード -->
   <div class="toolbar-left">
     <select id="pdfSelect">
+      <option value="">既存PDFを選択</option>
   　  <option value="京電16スタフ.pdf">京電16スタフ.pdf</option>
-  　  <option value="京電26スタフ.pdf">京電26スタフ.pdf</option>
+  　  <option value="京電16スタフ.pdf">京電26スタフ.pdf</option>
   　  <option value="再変115.pdf">再変115.pdf</option>
    　 <option value="大電5スタフ.pdf">大電5スタフ.pdf</option>
    　 <option value="変42スタフ.pdf">変42スタフ.pdf</option>
@@ -117,62 +121,89 @@ canvas {
     　<option value="臨6095スタフ.pdf">臨6095スタフ.pdf</option>
     </select>
 
-    <button id="zoomOut">−</button>
-    <span id="zoomLevel">100%</span>
-    <button id="zoomIn">＋</button>
+    <input type="file" id="pdfInput" accept="application/pdf">
   </div>
 
   <!-- 中央：ファイル名 -->
   <div class="toolbar-center">
-    <span id="fileName">sample1.pdf</span>
+    <span id="fileName">PDF未選択</span>
   </div>
 
-  <!-- 右：× → ゴミ箱 → ダウンロード -->
+  <!-- 右：× → ゴミ箱 → ダウンロード → ズーム -->
   <div class="toolbar-right">
-    <button id="close" title="Close">✕</button>
-    <button id="delete" title="Remove">🗑️</button>
+    <button id="clearBtn">🗑</button>
 
-    <button id="download" title="Download">
+    <button id="downloadBtn">
       <img src="data:image/svg+xml;utf8,
       <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'>
         <path d='M5 20h14v-2H5v2zm7-18v12l4-4 1.41 1.41L12 18.83l-5.41-5.42L8 10l4 4V2h1z'/>
       </svg>">
     </button>
+
+    <button id="zoomOut">−</button>
+    <span id="zoomLevel">100%</span>
+    <button id="zoomIn">＋</button>
   </div>
 
 </div>
 
-<!-- ===== PDF表示 ===== -->
 <div id="viewer"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-
 <script>
 let pdfDoc = null;
 let scale = 1.0;
+let currentFile = null;   // File or null
+let currentUrl = null;    // URL or null
 
-const select = document.getElementById('pdfSelect');
-const fileNameLabel = document.getElementById('fileName');
 const viewer = document.getElementById('viewer');
+const fileNameLabel = document.getElementById('fileName');
 const zoomLevel = document.getElementById('zoomLevel');
 
-let currentUrl = select.value;
-fileNameLabel.textContent = currentUrl;
-
-/* PDF読み込み */
-function loadPDF(url) {
+/* ===== 共通PDFロード ===== */
+function loadPdfFromSource(source, name) {
   viewer.innerHTML = '';
-  pdfjsLib.getDocument(url).promise.then(pdf => {
+  fileNameLabel.textContent = name;
+  scale = 1.0;
+
+  pdfjsLib.getDocument(source).promise.then(pdf => {
     pdfDoc = pdf;
-    scale = 1.0;
     renderAllPages();
   });
 }
 
-/* 全ページ描画 */
+/* ===== 既存PDF選択 ===== */
+document.getElementById('pdfSelect').onchange = e => {
+  const url = e.target.value;
+  if (!url) return;
+
+  currentUrl = url;
+  currentFile = null;
+  document.getElementById('pdfInput').value = '';
+
+  loadPdfFromSource(url, url);
+};
+
+/* ===== アップロード ===== */
+document.getElementById('pdfInput').onchange = e => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  currentFile = file;
+  currentUrl = null;
+  document.getElementById('pdfSelect').value = '';
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    loadPdfFromSource(new Uint8Array(reader.result), file.name);
+  };
+  reader.readAsArrayBuffer(file);
+};
+
+/* ===== 全ページ描画 ===== */
 function renderAllPages() {
-  zoomLevel.textContent = Math.round(scale * 100) + '%';
   viewer.innerHTML = '';
+  zoomLevel.textContent = Math.round(scale * 100) + '%';
 
   for (let i = 1; i <= pdfDoc.numPages; i++) {
     pdfDoc.getPage(i).then(page => {
@@ -189,43 +220,48 @@ function renderAllPages() {
   }
 }
 
-/* イベント */
-select.onchange = e => {
-  currentUrl = e.target.value;
-  fileNameLabel.textContent = currentUrl;
-  loadPDF(currentUrl);
-};
-
+/* ===== ズーム ===== */
 document.getElementById('zoomIn').onclick = () => {
   scale += 0.1;
   renderAllPages();
 };
 
 document.getElementById('zoomOut').onclick = () => {
-  if (scale > 0.3) {
+  if (scale > 0.4) {
     scale -= 0.1;
     renderAllPages();
   }
 };
 
-document.getElementById('download').onclick = () => {
-  const a = document.createElement('a');
-  a.href = currentUrl;
-  a.download = currentUrl;
-  a.click();
+/* ===== ダウンロード ===== */
+document.getElementById('downloadBtn').onclick = () => {
+  if (currentFile) {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(currentFile);
+    a.download = currentFile.name;
+    a.click();
+  } else if (currentUrl) {
+    const a = document.createElement('a');
+    a.href = currentUrl;
+    a.download = currentUrl;
+    a.click();
+  }
 };
 
-document.getElementById('delete').onclick = () => {
+/* ===== クリア ===== */
+document.getElementById('clearBtn').onclick = () => {
   viewer.innerHTML = '';
-  fileNameLabel.textContent = '';
+  fileNameLabel.textContent = 'PDF未選択';
+  document.getElementById('pdfInput').value = '';
+  document.getElementById('pdfSelect').value = '';
+  currentFile = null;
+  currentUrl = null;
 };
 
-document.getElementById('close').onclick = () => {
-  viewer.innerHTML = '';
+/* ===== 閉じる ===== */
+document.getElementById('closeBtn').onclick = () => {
+  window.close();
 };
-
-/* 初期表示 */
-loadPDF(currentUrl);
 </script>
 
 </body>
