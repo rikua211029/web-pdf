@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>PDFビューア</title>
+<title>PDFビューア（マーカー＋消しゴム）</title>
 
 <style>
 body {
@@ -31,39 +31,24 @@ body {
   width: 280px;
 }
 
-.lock-box h2 {
-  margin-bottom: 16px;
-}
-
-.lock-box input {
+.lock-box input,
+.lock-box button {
   width: 100%;
   padding: 10px;
   font-size: 16px;
-  margin-bottom: 12px;
   border-radius: 6px;
   border: none;
 }
 
 .lock-box button {
-  width: 100%;
-  padding: 10px;
-  font-size: 16px;
   background: #1976d2;
   color: #fff;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.lock-box button:hover {
-  background: #1e88e5;
 }
 
 #lockError {
   display: none;
-  margin-top: 10px;
   color: #f44336;
-  font-size: 14px;
+  margin-top: 8px;
 }
 
 /* ===== ツールバー ===== */
@@ -77,7 +62,7 @@ body {
   color: #fff;
   display: flex;
   align-items: center;
-  padding: 0 16px;
+  padding: 0 12px;
   z-index: 100;
 }
 
@@ -86,68 +71,36 @@ body {
 .toolbar-right {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .toolbar-left,
-.toolbar-right {
-  flex: 1;
-}
-
+.toolbar-right { flex: 1; }
 .toolbar-center {
   flex: 2;
   justify-content: center;
-  font-size: 22px;
   font-weight: bold;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
-/* アップロード：アイコンボタン */
-.icon-btn {
-  width: 32px;
-  height: 32px;
-  background: #1976d2;
-  color: #fff;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  font-size: 18px;
-}
-
-.icon-btn:hover {
-  background: #1e88e5;
-}
-
-/* file input は非表示 */
-#pdfInput {
-  display: none;
-}
-
-#toolbar select,
-#toolbar button {
+button, select {
   background: #444;
   color: #fff;
   border: none;
-  padding: 8px 12px;
-  font-size: 16px;
+  padding: 8px 10px;
   border-radius: 6px;
+}
+
+.marker-btn {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
   cursor: pointer;
 }
 
-#toolbar button:hover,
-#toolbar select:hover {
-  background: #666;
-}
-
-#zoomLevel {
-  font-size: 16px;
-  min-width: 60px;
-  text-align: center;
-}
+.yellow { background: rgba(255,235,59,0.8); }
+.blue   { background: rgba(33,150,243,0.8); }
+.red    { background: rgba(244,67,54,0.8); }
+.eraser { background: #eee; color:#000; font-size:14px; }
 
 /* ===== PDF表示 ===== */
 #viewer {
@@ -158,34 +111,42 @@ body {
   gap: 24px;
 }
 
+.page-wrap {
+  position: relative;
+}
+
 canvas {
   display: block;
-  margin: 0 auto;
   background: #fff;
   box-shadow: 0 0 10px rgba(0,0,0,0.2);
+}
+
+.draw-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
 }
 </style>
 </head>
 
 <body>
 
-<!-- ===== ロック画面 ===== -->
+<!-- ロック -->
 <div id="lockScreen">
   <div class="lock-box">
-    <h2>🔒 パスワードを入力</h2>
-    <input type="password" id="passwordInput" placeholder="Password">
+    <h3>🔒 パスワード</h3>
+    <input type="password" id="passwordInput">
     <button id="unlockBtn">開く</button>
-    <p id="lockError">パスワードが違います</p>
+    <div id="lockError">パスワードが違います</div>
   </div>
 </div>
 
-<!-- ===== アプリ本体 ===== -->
 <div id="app" style="display:none;">
 
   <div id="toolbar">
     <div class="toolbar-left">
       <select id="pdfSelect">
-        <option value="">既存のPDFを表示</option>
+      <option value="">PDF選択</option>
   　  <option value="京電16スタフ.pdf">京電16スタフ.pdf</option>
   　  <option value="京電26スタフ.pdf">京電26スタフ.pdf</option>
   　  <option value="再変115.pdf">再変115.pdf</option>
@@ -200,9 +161,6 @@ canvas {
    　 <option value="臨6017スタフ.pdf">臨6017スタフ.pdf</option>
     　<option value="臨6095スタフ.pdf">臨6095スタフ.pdf</option>
       </select>
-
-      <label for="pdfInput" class="icon-btn" title="PDFをアップロード">📄</label>
-      <input type="file" id="pdfInput" accept="application/pdf">
     </div>
 
     <div class="toolbar-center">
@@ -210,11 +168,13 @@ canvas {
     </div>
 
     <div class="toolbar-right">
+      🖍
+      <div class="marker-btn yellow" data-mode="draw" data-color="rgba(255,235,59,0.5)"></div>
+      <div class="marker-btn blue" data-mode="draw" data-color="rgba(33,150,243,0.5)"></div>
+      <div class="marker-btn red" data-mode="draw" data-color="rgba(244,67,54,0.5)"></div>
+      <div class="marker-btn eraser" data-mode="erase">❌</div>
       <button id="zoomOut">−</button>
-      <span id="zoomLevel">100%</span>
       <button id="zoomIn">＋</button>
-      <button id="clearBtn">🗑</button>
-      <button id="downloadBtn">⬇</button>
     </div>
   </div>
 
@@ -226,103 +186,123 @@ canvas {
 pdfjsLib.GlobalWorkerOptions.workerSrc =
   "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 
-/* ===== パスワード ===== */
+/* ===== ロック ===== */
 const PASSWORD = "2009";
-
-document.getElementById("unlockBtn").onclick = () => {
-  const input = document.getElementById("passwordInput").value;
-  if (input === PASSWORD) {
-    document.getElementById("lockScreen").style.display = "none";
-    document.getElementById("app").style.display = "block";
+unlockBtn.onclick = () => {
+  if (passwordInput.value === PASSWORD) {
+    lockScreen.style.display = "none";
+    app.style.display = "block";
   } else {
-    document.getElementById("lockError").style.display = "block";
+    lockError.style.display = "block";
   }
 };
 
-/* ===== PDF処理 ===== */
-let pdfDoc = null;
-let scale = 1.0;
-let currentFile = null;
-let currentUrl = null;
+/* ===== 状態 ===== */
+let pdfDoc, scale = 1.0;
+let mode = "draw";
+let markerColor = "rgba(255,235,59,0.5)";
+const viewer = document.getElementById("viewer");
+const fileNameLabel = document.getElementById("fileName");
 
-const viewer = document.getElementById('viewer');
-const fileNameLabel = document.getElementById('fileName');
-const zoomLevel = document.getElementById('zoomLevel');
+/* ===== ツール切替 ===== */
+document.querySelectorAll(".marker-btn").forEach(btn => {
+  btn.onclick = () => {
+    mode = btn.dataset.mode;
+    if (mode === "draw") markerColor = btn.dataset.color;
+  };
+});
 
-function loadPdf(source, name) {
-  viewer.innerHTML = '';
+/* ===== PDF ===== */
+function loadPdf(url, name) {
+  viewer.innerHTML = "";
   fileNameLabel.textContent = name;
-  scale = 1.0;
-
-  pdfjsLib.getDocument(source).promise.then(pdf => {
+  pdfjsLib.getDocument(url).promise.then(pdf => {
     pdfDoc = pdf;
     renderAll();
   });
 }
 
-document.getElementById('pdfSelect').onchange = e => {
-  const url = e.target.value;
-  if (!url) return;
-
-  currentUrl = url;
-  currentFile = null;
-  document.getElementById('pdfInput').value = '';
-
-  loadPdf(url, url);
+pdfSelect.onchange = e => {
+  if (e.target.value) loadPdf(e.target.value, e.target.value);
 };
 
 function renderAll() {
-  viewer.innerHTML = '';
-  zoomLevel.textContent = Math.round(scale * 100) + '%';
-
+  viewer.innerHTML = "";
   for (let i = 1; i <= pdfDoc.numPages; i++) {
     pdfDoc.getPage(i).then(page => {
       const vp = page.getViewport({ scale });
-      const c = document.createElement('canvas');
-      const ctx = c.getContext('2d');
-      c.width = vp.width;
-      c.height = vp.height;
-      page.render({ canvasContext: ctx, viewport: vp });
-      viewer.appendChild(c);
+
+      const wrap = document.createElement("div");
+      wrap.className = "page-wrap";
+
+      const pdfCanvas = document.createElement("canvas");
+      pdfCanvas.width = vp.width;
+      pdfCanvas.height = vp.height;
+      page.render({ canvasContext: pdfCanvas.getContext("2d"), viewport: vp });
+
+      const drawCanvas = document.createElement("canvas");
+      drawCanvas.className = "draw-layer";
+      drawCanvas.width = vp.width;
+      drawCanvas.height = vp.height;
+
+      enableDraw(drawCanvas);
+
+      wrap.append(pdfCanvas, drawCanvas);
+      viewer.appendChild(wrap);
     });
   }
 }
 
-document.getElementById('pdfInput').onchange = e => {
-  const f = e.target.files[0];
-  if (!f) return;
-  currentFile = f;
-  const r = new FileReader();
-  r.onload = () => loadPdf(new Uint8Array(r.result), f.name);
-  r.readAsArrayBuffer(f);
-};
+/* ===== 描画・消去 ===== */
+function enableDraw(c) {
+  const ctx = c.getContext("2d");
+  let drawing = false;
 
-document.getElementById('zoomIn').onclick = () => { scale += 0.1; renderAll(); };
-document.getElementById('zoomOut').onclick = () => { if (scale > 0.4) { scale -= 0.1; renderAll(); } };
-document.getElementById('clearBtn').onclick = () => { viewer.innerHTML = ''; fileNameLabel.textContent = 'PDF未選択'; };
+  const pos = e => {
+    const r = c.getBoundingClientRect();
+    const p = e.touches ? e.touches[0] : e;
+    return { x: p.clientX - r.left, y: p.clientY - r.top };
+  };
 
-/* ===== ダウンロード対応 ===== */
-document.getElementById('downloadBtn').onclick = () => {
-  let url = null;
-  let name = 'download.pdf';
-  if (currentFile) {
-    // アップロードPDFの場合
-    url = URL.createObjectURL(currentFile);
-    name = currentFile.name;
-  } else if (currentUrl) {
-    // 既存PDFの場合
-    url = currentUrl;
-    const parts = currentUrl.split('/');
-    name = parts[parts.length - 1];
-  }
+  const start = e => {
+    drawing = true;
+    ctx.beginPath();
+    const p = pos(e);
+    ctx.moveTo(p.x, p.y);
+    ctx.lineWidth = 18;
+    ctx.lineCap = "round";
 
-  if (url) {
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = name;
-    a.click();
-  }
-};
+    if (mode === "erase") {
+      ctx.globalCompositeOperation = "destination-out";
+    } else {
+      ctx.globalCompositeOperation = "source-over";
+      ctx.strokeStyle = markerColor;
+    }
+  };
+
+  const move = e => {
+    if (!drawing) return;
+    const p = pos(e);
+    ctx.lineTo(p.x, p.y);
+    ctx.stroke();
+  };
+
+  const end = () => {
+    drawing = false;
+    ctx.globalCompositeOperation = "source-over";
+  };
+
+  c.addEventListener("mousedown", start);
+  c.addEventListener("mousemove", move);
+  c.addEventListener("mouseup", end);
+  c.addEventListener("touchstart", start, { passive:false });
+  c.addEventListener("touchmove", move, { passive:false });
+  c.addEventListener("touchend", end);
+}
+
+/* ===== ズーム ===== */
+zoomIn.onclick = () => { scale += 0.1; renderAll(); };
+zoomOut.onclick = () => { if (scale > 0.5) { scale -= 0.1; renderAll(); } };
 </script>
 
 </body>
