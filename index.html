@@ -17,60 +17,6 @@ body {
   background: #f0f0f0;
 }
 
-/* ===== ロック画面 ===== */
-#lockScreen {
-  position: fixed;
-  inset: 0;
-  background: #111;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10000;
-}
-
-.lock-box {
-  background: #222;
-  padding: 32px;
-  border-radius: 12px;
-  text-align: center;
-  color: #fff;
-  width: 280px;
-}
-
-.lock-box h2 {
-  margin-bottom: 16px;
-}
-
-.lock-box input {
-  width: 100%;
-  padding: 10px;
-  font-size: 16px;
-  margin-bottom: 12px;
-  border-radius: 6px;
-  border: none;
-}
-
-.lock-box button {
-  width: 100%;
-  padding: 10px;
-  font-size: 16px;
-  background: #1976d2;
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.lock-box button:hover {
-  background: #1e88e5;
-}
-
-#lockError {
-  display: none;
-  margin-top: 10px;
-  color: #f44336;
-  font-size: 14px;
-}
 
 /* ===== ツールバー ===== */
 #toolbar {
@@ -175,15 +121,6 @@ canvas {
 
 <body>
 
-<!-- ===== ロック画面 ===== -->
-<div id="lockScreen">
-  <div class="lock-box">
-    <h2>🔒 パスワードを入力</h2>
-    <input type="password" id="passwordInput" placeholder="Password">
-    <button id="unlockBtn">開く</button>
-    <p id="lockError">パスワードが違います</p>
-  </div>
-</div>
 
 <!-- ===== アプリ本体 ===== -->
 <div id="app" style="display:none;">
